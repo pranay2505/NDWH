@@ -1,0 +1,56 @@
+--BURN
+DROP TABLE NI_SANDPIT_OWNER.BURN_IND1;
+create table try1 as select card_key
+,
+case when 
+   TRUNC(TRAN_DATE)>='18MAY2019'
+  AND SUPPLIER_ID not in ('JSAINSBURY','ARGOS','COMICRLIEF') then 1
+ else 0 end as indicators
+ from dm3_owner.burn_fact
+ WHERE TRUNC(TRAN_DATE)>='18MAY2019' ;
+ 
+ DROP TABLE NI_SANDPIT_OWNER.BURN_IND2;
+ create table BURN_IND2 as 
+ SELECT CARD_KEY,SUM(INDICATORS)as val
+ FROM BURN_IND1
+ GROUP BY card_key ;
+
+DROP TABLE NI_SANDPIT_OWNER.BURN_IND3;
+ create table BURN_IND3 as
+ select card_loyalty_id ,case when val>0 then 'Y' else 'N' end as BURN_IND
+ from BURN_IND2 
+ right join dm3_owner.card_dim 
+ on BURN_IND2.card_key=dm3_owner.card_dim.card_key;
+ 
+ --EARN
+ DROP TABLE NI_SANDPIT_OWNER.EARN_ind1;
+create table EARN_ind1 as select card_key
+,
+case when 
+   TRUNC(TRAN_DATE)>='18MAY2019'
+  AND TRAN_SPONSOR not in ('JSAINSBURY','ARGOS','COMICRLIEF') then 1
+ else 0 end as indicators
+ from dm3_owner.earn_fact
+ WHERE TRUNC(TRAN_DATE)>='18MAY2019' ;
+ 
+ DROP TABLE NI_SANDPIT_OWNER.EARN_ind2;
+ create table EARN_ind2 as 
+ SELECT CARD_KEY,SUM(INDICATORS)as val
+ FROM EARN_ind1
+ GROUP BY card_key ;
+
+DROP TABLE NI_SANDPIT_OWNER.EARN_ind3;
+ create table EARN_ind3 as
+ select card_loyalty_id ,case when val>0 then 'Y' else 'N' end as EARN_IND
+ from EARN_ind2 
+ right join dm3_owner.card_dim 
+ on EARN_IND2.card_key=dm3_owner.card_dim.card_key;
+ 
+ 
+ --JOIN THEM TOGETHER TO GET FINAL TABLE
+ 
+ CREATE TABLE SUBSCRIPTION_NDWH AS SELECT 
+ EARN_IND3.CARD_LOYALTY_ID,EARN_IND,BURN_IND
+ FROM EARN_IND3
+ left JOIN BURN_IND3
+ ON BURN_IND3.CARD_LOYALTY_ID=EARN_IND3.CARD_LOYALTY_ID;
