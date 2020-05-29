@@ -2,7 +2,7 @@
 DROP TABLE NI_SANDPIT_OWNER.BURN_IND1;
 create table try1 as select card_key
 ,
-case when 
+case when s
    TRUNC(TRAN_DATE)>='18MAY2019'
   AND SUPPLIER_ID not in ('JSAINSBURY','ARGOS','COMICRLIEF') then 1
  else 0 end as indicators
