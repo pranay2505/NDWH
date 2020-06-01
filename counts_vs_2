@@ -1,0 +1,56 @@
+--BURN
+DROP TABLE NI_SANDPIT_OWNER.BURN_IND1;
+create table BURN_IND1 as select card_key
+,
+case when 
+   TRUNC(TRAN_DATE)>='29MAY2019'
+  AND SUPPLIER_ID not in ('JSAINSBURY','ARGOS') then 1
+ else 1000 end as indicators
+ from dm3_owner.burn_fact
+ WHERE TRUNC(TRAN_DATE)>='29MAY2019' ;
+ 
+ DROP TABLE NI_SANDPIT_OWNER.BURN_IND2;
+ create table BURN_IND2 as 
+ SELECT CARD_KEY,SUM(INDICATORS)as val
+ FROM BURN_IND1
+ GROUP BY card_key ;
+
+
+ --EARN
+ DROP TABLE NI_SANDPIT_OWNER.EARN_ind1;
+create table EARN_ind1 as select card_key
+,
+case when 
+   TRUNC(TRAN_DATE)>='29MAY2019'
+  AND TRAN_SPONSOR not in ('JSAINSBURY','ARGOS') then 1
+ else 1000 end as indicators
+ from dm3_owner.earn_fact
+ WHERE TRUNC(TRAN_DATE)>='29MAY2019' ;
+ 
+ DROP TABLE NI_SANDPIT_OWNER.EARN_ind2;
+ create table EARN_ind2 as 
+ SELECT CARD_KEY,SUM(INDICATORS)as val
+ FROM EARN_ind1
+ GROUP BY card_key ;
+
+ 
+ 
+ --JOIN THEM TOGETHER TO GET FINAL TABLE
+  DROP TABLE NI_SANDPIT_OWNER.SUBSCRIPTION_NDWH;
+   CREATE TABLE SUBSCRIPTION_NDWH AS SELECT 
+ --CARD_LOYALTY_ID,
+ distinct EARN_IND2.card_key as card_keys
+,case when EARN_IND2.val<1000 then 'Y' else 'N' end as EARN_IND
+,case when BURN_IND2.val<1000 then 'Y' else 'N' end as BURN_IND
+--EARN_IND2.val as earn_val,
+--BURN_IND2.val as burn_val
+
+FROM EARN_IND2
+full outer  JOIN BURN_IND2
+ ON Burn_Ind2.Card_Key=Earn_Ind2.Card_Key
+ ;
+  
+  --Those who have not engaged 
+ select count(distinct card_keys)
+ from NI_SANDPIT_OWNER.SUBSCRIPTION_NDWH
+ where EARN_IND='Y' or BURN_IND='Y';
