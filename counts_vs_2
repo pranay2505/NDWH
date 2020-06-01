@@ -51,6 +51,12 @@ full outer  JOIN BURN_IND2
  ;
   
   --Those who have not engaged 
- select count(distinct card_keys)
+  select count(distinct card_keys)
  from NI_SANDPIT_OWNER.SUBSCRIPTION_NDWH
- where EARN_IND='Y' or BURN_IND='Y';
+where
+(EARN_IND='Y' and BURN_IND='')
+or
+(EARN_IND='' and BURN_IND='Y')
+or
+(EARN_IND='Y' and BURN_IND='Y')
+;
